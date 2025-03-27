@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clasificación de Hospitales</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #d6eaf8;
+      padding: 0;
+      margin: 0;
+    }
+    .container {
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      display: grid;
+      gap: 12px;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, select, textarea, button {
+      padding: 8px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      width: 100%;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CLASIFICACION DE HOSPITALES</h1>
+    <form id="hospitalForm">
+      <label>Correo electrónico *</label>
+      <input type="email" id="email" required>
+
+      <label>Planta *</label>
+      <select id="plant" required>
+        <option value="">Selecciona una planta</option>
+        <option value="RM00">RM00</option>
+        <option value="RM06">RM06</option>
+        <option value="RM07">RM07</option>
+      </select>
+
+      <label>Fecha</label>
+      <input type="date" id="date">
+
+      <label>Solicitante *</label>
+      <input type="text" id="applicant" required>
+
+      <label>Motivo *</label>
+      <select id="concept">
+        <option value="">Selecciona un motivo</option>
+        <option value="10 Devolución Cliente">Devolución Cliente</option>
+        <option value="01 Daño Interno">Daño Interno</option>
+        <option value="05 Siniestro">Siniestro</option>
+        <option value="11 Calidad">Calidad</option>
+        <option value="otro">Otro (Especificar)</option>
+      </select>
+      <textarea id="otherConcept" placeholder="Especifica el motivo"></textarea>
+
+      <label>Modelo</label>
+      <input type="text" id="model">
+
+      <label>Destino</label>
+      <select id="destination">
+        <option value="">Selecciona un destino</option>
+        <option value="Hospital Verde">Hospital Verde</option>
+        <option value="Hospital Rojo">Hospital Rojo</option>
+      </select>
+
+      <label>Zona Afectada</label>
+      <select id="zone">
+        <option value="">Selecciona una zona</option>
+        <option value="Parte superior">Parte superior</option>
+        <option value="Frontal">Frontal</option>
+        <option value="Lateral derecho">Lateral derecho</option>
+        <option value="Lateral izquierdo">Lateral izquierdo</option>
+        <option value="Respaldo">Respaldo</option>
+        <option value="Parte inferior">Parte inferior</option>
+      </select>
+
+      <label>Defecto</label>
+      <select id="defect">
+        <option value="">Selecciona un defecto</option>
+        <option value="Mal funcionamiento">Mal funcionamiento</option>
+        <option value="Golpe">Golpe</option>
+        <option value="Rayón">Rayón</option>
+        <option value="Falta de componentes">Falta de componentes</option>
+      </select>
+
+      <label>Validó (Equipo de Calidad)</label>
+      <select id="validatedBy">
+        <option value="">Selecciona un validador</option>
+        <option value="Francisco Daniel Arias">Francisco Daniel Arias</option>
+        <option value="Jennifer Nuñez">Jennifer Nuñez</option>
+      </select>
+
+      <label>Serie</label>
+      <input type="text" id="series">
+
+      <label>Evidencias</label>
+      <input type="file" id="evidence1" accept="image/*">
+      <input type="file" id="evidence2" accept="image/*">
+      <input type="file" id="evidence3" accept="image/*">
+      <input type="file" id="evidence4" accept="image/*">
+      <input type="file" id="evidence5" accept="image/*">
+
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <script>
+    const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/dug90vwpe/image/upload';
+    const CLOUDINARY_UPLOAD_PRESET = 'unsigned';
+    const SHEETS_ENDPOINT = 'https://script.google.com/a/macros/whirlpool.com/s/AKfycbzFOLy3r-RqOeWuSl8Elhw9zF-wXM2cD-Qv36GcoIHNvdQCWfSKar-B8Atec4ljW-0h/exec';
+
+    async function uploadToCloudinary(file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+      const res = await fetch(CLOUDINARY_URL, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      return data.secure_url;
+    }
+
+    document.getElementById("hospitalForm").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      let evidenceUrls = [];
+
+      for (let i = 1; i <= 5; i++) {
+        const fileInput = document.getElementById(`evidence${i}`);
+        if (fileInput.files.length > 0) {
+          const url = await uploadToCloudinary(fileInput.files[0]);
+          evidenceUrls.push(url);
+        }
+      }
+
+      const payload = {
+        email: document.getElementById("email").value,
+        plant: document.getElementById("plant").value,
+        date: document.getElementById("date").value,
+        applicant: document.getElementById("applicant").value,
+        concept: document.getElementById("concept").value,
+        otherConcept: document.getElementById("otherConcept").value,
+        model: document.getElementById("model").value,
+        destination: document.getElementById("destination").value,
+        zone: document.getElementById("zone").value,
+        defect: document.getElementById("defect").value,
+        validatedBy: document.getElementById("validatedBy").value,
+        series: document.getElementById("series").value,
+        evidences: evidenceUrls.join(", "),
+        timestamp: new Date().toLocaleString("es-MX")
+      };
+
+      const response = await fetch(SHEETS_ENDPOINT, {
+        method: "POST",
+        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (response.ok) {
+        alert("Formulario enviado y datos guardados en Google Sheets");
+      } else {
+        alert("Error al enviar el formulario");
+      }
+    });
+  </script>
+</body>
+</html>
